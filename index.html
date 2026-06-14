@@ -154,29 +154,32 @@
 
 <script>
     // GANTI DENGAN LINK WEB APP GOOGLE ASLI ANDA
-const API_URL = "https://script.google.com/macros/s/XXXXX_Kode_Panjang_Anda_XXXXX/exec"; 
+    const API_URL = "https://script.google.com/macros/s/XXXXX_Kode_Panjang_Anda_XXXXX/exec"; 
 
-window.onload = function() {
-    muatDataDariGoogleSheets();
-};
+    window.onload = function() {
+        muatDataDariGoogleSheets();
+    };
 
-function muatDataDariGoogleSheets() {
-    // Tampilkan pesan loading di tabel sementara menunggu data
-    document.getElementById('tabelBody').innerHTML = `<tr><td colspan="10" class="text-center text-muted py-3">⏳ Sedang mengambil data kas dari cloud...</td></tr>`;
-    
-    fetch(API_URL)
-        .then(response => response.json())
-        .then(dataCloud => {
-            // Salin data dari cloud ke sistem lokal agar fitur cetak tetap bekerja
-            dataWarga = dataCloud.warga || [];
-            logTransaksi = dataCloud.log || [];
-            dataSukarela = dataCloud.sukarela || [];
-            
-            // Render ulang tabel dengan data asli dari Google Sheets
-            tampilkanData();
-        })
-        .catch(error => {
-            console.error("Eror API:", error);
-            document.getElementById('tabelBody').innerHTML = `<tr><td colspan="10" class="text-center text-danger py-3">❌ Gagal memuat data dari server cloud kas. Periksa koneksi internet Anda.</td></tr>`;
-        });
-}
+    function muatDataDariGoogleSheets() {
+        // Tampilkan pesan loading di tabel sementara menunggu data
+        document.getElementById('tabelBody').innerHTML = `<tr><td colspan="10" class="text-center text-muted py-3">⏳ Sedang mengambil data kas dari cloud...</td></tr>`;
+        
+        fetch(API_URL)
+            .then(response => response.json())
+            .then(dataCloud => {
+                // Salin data dari cloud ke sistem lokal agar fitur cetak tetap bekerja
+                dataWarga = dataCloud.warga || [];
+                logTransaksi = dataCloud.log || [];
+                dataSukarela = dataCloud.sukarela || [];
+                
+                // Render ulang tabel dengan data asli dari Google Sheets
+                tampilkanData();
+            })
+            .catch(error => {
+                console.error("Eror API:", error);
+                document.getElementById('tabelBody').innerHTML = `<tr><td colspan="10" class="text-center text-danger py-3">❌ Gagal memuat data dari server cloud kas. Periksa koneksi internet Anda.</td></tr>`;
+            });
+    }
+</script>
+</body>
+</html>
