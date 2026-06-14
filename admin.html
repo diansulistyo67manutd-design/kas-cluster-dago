@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aplikasi Kas Cluster - Dashboard Pengurus</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { padding-top: 20px; background-color: #f8f9fa; }
+        .sudah-bayar { background-color: #d1e7dd !important; color: #0f5132; font-weight: bold; }
+        .belum-bayar { background-color: #f8d7da !important; color: #842029; }
+        .align-middle td, .align-middle th { vertical-align: middle !important; }
+        .form-check-input { width: 18px; height: 18px; cursor: pointer; }
+        .table-footer { background-color: #e9ecef; font-weight: bold; }
+        .tabel-kas-padat th, .tabel-kas-padat td { font-size: 0.85rem !important; padding: 6px 4px !important; }
+    </style>
+</head>
+<body>
+
+<div class="modal fade" id="modalUbahPassword" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-sm">
+    <div class="modal-content">
+      <div class="modal-header bg-danger text-white">
+        <h6 class="modal-title fw-bold">⚙️ Pengaturan Akun Admin</h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form onsubmit="prosesGantiKredensial(event)">
+            <div class="mb-2">
+                <label class="form-label small fw-bold text-secondary">Username Baru:</label>
+                <input type="text" id="userBaru" class="form-control form-control-sm" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label small fw-bold text-secondary">Password Baru Anda:</label>
+                <input type="password" id="passBaru" class="form-control form-control-sm" required>
+            </div>
+            <button type="submit" class="btn btn-danger btn-sm w-100 fw-bold">Simpan Akun Baru</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="modalLog" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-warning text-dark">
+        <h5 class="modal-title fw-bold" id="modalLogTitle">Form Transaksi Operasional</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="formLogTransaksi" onsubmit="simpanLogTransaksi(event)">
+            <input type="hidden" id="logId">
+            <div class="mb-3">
+                <label class="form-label fw-bold">Pilih Tanggal</label>
+                <input type="date" id="logTanggal" class="form-control" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-bold">Nama / Keterangan Transaksi</label>
+                <input type="text" id="logNama" class="form-control" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-bold">Jenis Transaksi</label>
+                <select id="logJenis" class="form-select">
+                    <option value="pemasukan">Pemasukan (Uang Masuk)</option>
+                    <option value="pengeluaran">Pengeluaran (Uang Keluar)</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-bold">Nominal Uang (Rp)</label>
+                <input type="number" id="logJumlah" class="form-control" required>
+            </div>
+            <div class="text-end">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="submit" class="btn btn-primary fw-bold">Simpan Transaksi</button>
+            </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="modalSukarela" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title fw-bold" id="modalSukarelaTitle">Form Sumbangan Sukarela</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="formSukarela" onsubmit="simpanSukarela(event)">
+            <input type="hidden" id="sukarelaId">
+            <div class="mb-3">
+                <label class="form-label fw-bold">Pilih Tanggal</label>
+                <input type="date" id="sukarelaTanggal" class="form-control" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-bold">Keterangan / Nama Penyumbang</label>
+                <textarea id="sukarelaNama" class="form-control" rows="2" required></textarea>
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-bold">Jenis Transaksi</label>
+                <select id="sukarelaJenis" class="form-select">
+                    <option value="pemasukan">Pemasukan Uang Masuk</option>
+                    <option value="pengeluaran">Pengeluaran Uang Keluar</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-bold">Nominal Uang (Rp)</label>
+                <input type="number" id="sukarelaJumlah" class="form-control" placeholder="Masukkan angka saja" required>
+            </div>
+            <div class="text-end">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="submit" class="btn btn-success fw-bold">Simpan Data</button>
+            </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container-fluid px-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 p-3 bg-danger text-white rounded shadow-sm">
+        <h4 class="mb-0 fw-bold">⚙️ INTERFACE MANAGEMENT KAS (SUPER USER)</h4>
+        <div>
+            <button class="btn btn-light btn-sm fw-bold me-2" data-bs-toggle="modal" data-bs-target="#modalUbahPassword">⚙️ Pengaturan Akun</button>
+            <button class="btn btn-dark btn-sm fw-bold" onclick="prosesLogoutSistem()">Keluar / Logout</button>
+        </div>
+    </div>
+
+    <div class="mb-3 p-3 bg-white rounded shadow-sm border">
+        <span class="fw-bold text-secondary me-3">Kontrol Pengurus:</span>
+        <button class="btn btn-success fw-bold btn-sm" onclick="tambahWargaBaru()">➕ Tambah Warga Baru</button>
+        <span id="kuotaInfo" class="text-muted fw-bold ms-2"></span>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-12 col-lg-6">
+            <div class="card p-3 shadow-sm h-100 bg-white">
+                <h5 class="fw-bold text-dark mb-3">📋 Kelola Pembayaran Bulanan</h5>
+                <div class="table-responsive">
+                    <table class="table table-bordered align-middle text-center tabel-kas-padat">
+                        <thead class="table-dark">
+                            <tr id="tabelHeader"></tr>
+                        </thead>
+                        <tbody id="tabelBody"></tbody>
+                        <tfoot id="tabelFooter" class="table-footer"></tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-6">
+            <div class="card p-3 shadow-sm border-success bg-white h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold text-success mb-0">🤝 Kelola Sumbangan Sukarela</h5>
+                    <button class="btn btn-success btn-sm fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalSukarela" onclick="bukaModalTambahSukarela()">Input Sumbangan Baru</button>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped align-middle text-center" style="font-size: 0.85rem;">
+                        <thead class="table-success text-dark">
+                            <tr>
+                                <th style="width: 40px;">No</th>
+                                <th style="width: 100px;">Tanggal</th>
+                                <th class="text-start">Keterangan Sumbangan</th>
+                                <th style="width: 80px;">Masuk</th>
+                                <th style="width: 80px;">Keluar</th>
+                                <th style="width: 100px;">Saldo</th>
+                                <th style="width: 90px;">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelSukarelaBody"></tbody>
+                        <tfoot class="table-footer bg-light">
+                            <tr>
+                                <td colspan="5" class="text-end fw-bold text-success" style="font-size: 12px;">TOTAL REAL TIME:</td>
+                                <td id="footTotalSukarela" class="fw-bold text-dark text-center" style="font-size: 13px;">Rp 0</td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card p-3 shadow-sm mb-4 bg-white">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="fw-bold text-secondary mb-0">📑 Kelola Log Transaksi Operasional</h5>
+            <button class="btn btn-warning btn-sm fw-bold shadow-sm text-dark" data-bs-toggle="modal" data-bs-target="#modalLog" onclick="bukaModalTambahLog()">Input Transaksi Baru</button>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped align-middle text-center">
+                <thead class="table-secondary">
+                    <tr>
+                        <th style="width: 50px;">No</th>
+                        <th style="width: 130px;">Tanggal</th>
+                        <th class="text-start">Nama Transaksi</th>
+                        <th style="width: 150px;">Pemasukan</th>
+                        <th style="width: 150px;">Pengeluaran</th>
+                        <th style="width: 180px;">Total Saldo</th>
+                        <th style="width: 110px;">Aksi Admin</th>
+                    </tr>
+                </thead>
+                <tbody id="tabelLogBody"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // ==========================================
+    // SEBELUM DI-UPLOAD, PASTIKAN URL DI BAWAH INI SAMA DENGAN URL DI INDEX.HTML
+    // ==========================================
+    const API_URL = "PASANG_URL_WEB_APP_APPS_SCRIPT_DI_SINI";
+
+    let totalPerBulanGlobal = {};
+    const namaBulanIndo = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+
+    let passwordSistemSkg = localStorage.getItem('passwordKasCluster') || "admin";
+    let listIdTerhapusDinamis = JSON.parse(localStorage.getItem('listIdTerhapusSistem')) || [];
+
+    function dapatkanDaftar2Bulan() {
+        let hariIni = new Date(); let tahun = hariIni.getFullYear(); let bulanSekarang = hariIni.getMonth(); let tanggalSekarang = hariIni.getDate();
+        if (tanggalSekarang >= 20) { bulanSekarang = bulanSekarang + 1; }
+        let daftarBulan = [];
+        for (let i = 1; i >= 0; i--) {
+            let d = new Date(tahun, bulanSekarang - i, 1);
+            let m = d.getMonth(); let y = d.getFullYear();
+            daftarBulan.push({ id: `${y}-${String(m + 1).padStart(2, '0')}`, label: `${namaBulanIndo[m]} ${y}` });
+        }
+        return daftarBulan;
+    }
+    let bulanAktif = dapatkanDaftar2Bulan();
+
+    // Data di-set awal kosong, karena akan dimuat otomatis dari awan (Google Sheets)
+    let dataWarga = [];
+    let logTransaksi = [];
+    let dataSukarela = [];
+
+    window.onload = function() {
+        document.getElementById('tabelBody').innerHTML = `<tr><td colspan="10" class="text-center py-4">⏳ Mengambil database terbaru dari Google Sheets...</td></tr>`;
+        
+        fetch(API_URL)
+          .then(res => res.json())
+          .then(data => {
+              dataWarga = data.dataWarga || [];
+              logTransaksi = data.logTransaksi || [];
+              dataSukarela = data.dataSukarela || [];
+              
+              paksaHitungUlangKasSistem();
+              tampilkanData();
+          })
+          .catch(err => {
+              document.getElementById('tabelBody').innerHTML = `<tr><td colspan="10" class="text-center text-danger py-4">❌ Gagal terhubung ke Google Sheets Cloud. Periksa URL Apps Script Anda.</td></tr>`;
+          });
+    };
+
+    // FUNGSI BARU: Mengirim seluruh pembaruan data secara langsung ke Google Sheets Cloud
+    function sinkronisasiKeGoogleSheets() {
+        fetch(API_URL, {
+            method: "POST",
+            body: JSON.stringify({
+                action: "simpanSemua",
+                dataWarga: dataWarga,
+                logTransaksi: logTransaksi,
+                dataSukarela: dataSukarela
+            })
+        })
+        .then(res => res.json())
+        .then(res => {
+            console.log("Awan Kas Berhasil Disinkronkan!");
+        })
+        .catch(err => console.error("Sinkronisasi gagal, namun data lokal tetap berjalan.", err));
+    }
+
+    function prosesLogoutSistem() { window.location.href = "index.html"; }
+
+    function prosesGantiKredensial(event) {
+        event.preventDefault();
+        localStorage.setItem('usernameKasCluster', document.getElementById('userBaru').value);
+        localStorage.setItem('passwordKasCluster', document.getElementById('passBaru').value);
+        alert("Akun Admin Sukses Diubah!");
+        bootstrap.Modal.getInstance(document.getElementById('modalUbahPassword')).hide();
+    }
+
+    function paksaHitungUlangKasSistem() {
+        logTransaksi = logTransaksi.filter(log => {
+            if(log.isSaldoAwal) return true;
+            let n = log.nama.trim().toLowerCase();
+            if(n === "kas maret" || n === "kas april" || n === "kas mei" || n === "kas juni") return false;
+            return true;
+        });
+
+        let rekapBulananDinamis = {};
+        bulanAktif.forEach(b => { rekapBulananDinamis[b.id] = 0; });
+        
+        dataWarga.forEach(w => {
+            if(w.pembayaran) {
+                Object.keys(w.pembayaran).forEach(idBln => {
+                    if(w.pembayaran[idBln] === true) {
+                        if(rekapBulananDinamis[idBln] === undefined) { rekapBulananDinamis[idBln] = 0; }
+                        rekapBulananDinamis[idBln] += parseInt(w.nominal || 50000);
+                    }
+                });
+            }
+        });
+
+        Object.keys(rekapBulananDinamis).forEach(idBln => {
+            let partTgl = idBln.split('-');
+            let idxBln = parseInt(partTgl[1]) - 1;
+            let namaBlnCari = namaBulanIndo[idxBln];
+            let targetIdCek = "AUTO_" + idBln;
+
+            if (listIdTerhapusDinamis.includes(targetIdCek)) return;
+
+            let ditemukan = false;
+            logTransaksi.forEach(log => {
+                if(log.id === targetIdCek || (!log.isSaldoAwal && log.nama && log.nama.toLowerCase().trim() === `kas ${namaBlnCari.toLowerCase()} ${partTgl[0]}`)) {
+                    log.pemasukan = rekapBulananDinamis[idBln];
+                    log.id = targetIdCek; 
+                    ditemukan = true;
+                }
+            });
+
+            if(!ditemukan) {
+                logTransaksi.push({ 
+                    id: targetIdCek,
+                    tanggal: `${partTgl[0]}-${partTgl[1]}-05`, 
+                    nama: `Kas ${namaBlnCari} ${partTgl[0]}`, 
+                    pemasukan: rekapBulananDinamis[idBln], 
+                    pengeluaran: 0, 
+                    isSaldoAwal: false 
+                });
+            }
+        });
+    }
+
+    function ubahStatusBayar(index, idBulan) {
+        let targetIdCek = "AUTO_" + idBulan;
+        if (listIdTerhapusDinamis.includes(targetIdCek)) {
+            listIdTerhapusDinamis = listIdTerhapusDinamis.filter(id => id !== targetIdCek);
+            localStorage.setItem('listIdTerhapusSistem', JSON.stringify(listIdTerhapusDinamis));
+        }
+        dataWarga[index].pembayaran[idBulan] = !dataWarga[index].pembayaran[idBulan];
+        paksaHitungUlangKasSistem();
+        tampilkanData();
+    }
+
+    function tambahWargaBaru() {
+        if (dataWarga.length >= 10) return;
+        let n = prompt("Nama Warga Baru:"); let b = prompt("Blok:"); if (!n || !b) return;
+        let p = {}; bulanAktif.forEach(bl => { p[bl.id] = false; });
+        dataWarga.push({ nama: n.toUpperCase(), blok: b.toUpperCase(), nominal: 50000, pembayaran: p });
+        paksaHitungUlangKasSistem(); tampilkanData();
+    }
+
+    function editWarga(index) {
+        let n = prompt("Edit Nama Warga:", dataWarga[index].nama);
+        let b = prompt("Edit Blok Hunian:", dataWarga[index].blok);
+        if (!n || !b) return;
+        dataWarga[index].nama = n.toUpperCase();
+        dataWarga[index].blok = b.toUpperCase();
+        tampilkanData();
+    }
+
+    function hapusWarga(index) {
+        if (confirm("Hapus warga ini?")) { dataWarga.splice(index, 1); paksaHitungUlangKasSistem(); tampilkanData(); }
+    }
+
+    function tampilkanData() {
+        logTransaksi.sort((a, b) => { if (a.isSaldoAwal) return -1; if (b.isSaldoAwal) return 1; return new Date(a.tanggal) - new Date(b.tanggal); });
+        let hitungSaldoTerakhir = logTransaksi[0].nilaiSaldoAwal;
+        logTransaksi.forEach((log) => { if (!log.isSaldoAwal) { hitungSaldoTerakhir += (log.pemasukan - log.pengeluaran); } });
+
+        if(document.getElementById('kuotaInfo')) document.getElementById('kuotaInfo').innerText = `(${dataWarga.length}/10 Warga)`;
+
+        const thead = document.getElementById('tabelHeader');
+        let headerHTML = `<th style="width: 35px;">No</th><th class="text-start">Nama</th><th style="width: 45px;">Blok</th><th style="width: 100px;">Nominal</th>`;
+        bulanAktif.forEach(b => { headerHTML += `<th>${b.label.split(' ')[0]}</th>`; });
+        headerHTML += `<th style="width: 80px;">Aksi</th>`;
+        thead.innerHTML = headerHTML;
+
+        const tbody = document.getElementById('tabelBody'); tbody.innerHTML = "";
+        bulanAktif.forEach(b => { totalPerBulanGlobal[b.id] = 0; });
+
+        dataWarga.forEach((warga, index) => {
+            let isiMasingMasingKolomBulan = "";
+            bulanAktif.forEach(b => {
+                if (!warga.pembayaran) warga.pembayaran = {}; let statusLunas = warga.pembayaran[b.id] || false;
+                if (statusLunas) { totalPerBulanGlobal[b.id] += parseInt(warga.nominal); }
+                isiMasingMasingKolomBulan += `<td class="${statusLunas ? 'sudah-bayar' : 'belum-bayar'}"><input type="checkbox" class="form-check-input" ${statusLunas ? 'checked' : ''} onchange="ubahStatusBayar(${index}, '${b.id}')"></td>`;
+            });
+            let tr = document.createElement('tr');
+            tr.innerHTML = `<td>${index + 1}</td><td class="text-start fw-bold">${warga.nama}</td><td>${warga.blok}</td><td class="text-primary fw-bold">Rp ${parseInt(warga.nominal).toLocaleString('id-ID')}</td>${isiMasingMasingKolomBulan}<td><button class="btn btn-sm btn-warning py-0 px-1 me-1 text-white" onclick="editWarga(${index})">✏️</button><button class="btn btn-sm btn-danger py-0 px-1" onclick="hapusWarga(${index})">🗑️</button></td>`;
+            tbody.appendChild(tr);
+        });
+
+        const tfoot = document.getElementById('tabelFooter');
+        let footerHTML = `<td colspan="3" class="text-end bg-dark text-white fw-bold" style="font-size:11px;">SISA KAS:</td><td class="fw-bold bg-dark text-warning" style="font-size:11px;">Rp ${hitungSaldoTerakhir.toLocaleString('id-ID')}</td>`;
+        bulanAktif.forEach(b => { footerHTML += `<td class="text-success fw-bold" style="font-size:11px;">Rp ${totalPerBulanGlobal[b.id].toLocaleString('id-ID')}</td>`; });
+        footerHTML += `<td></td>`; tfoot.innerHTML = footerHTML;
+
+        // OPERASIONAL LOG RENDER
+        const tbodyLog = document.getElementById('tabelLogBody'); tbodyLog.innerHTML = "";
+        let nomorBarisTabel = 1;
+        
+        let trAwal = document.createElement('tr'); 
+        trAwal.innerHTML = `<td>${nomorBarisTabel++}</td><td>-</td><td class="text-start fw-bold">Saldo Awal</td><td>-</td><td>-</td><td class="fw-bold">Rp ${logTransaksi[0].nilaiSaldoAwal.toLocaleString('id-ID')}</td><td>🔒</td>`;
+        tbodyLog.appendChild(trAwal);
+
+        let saldoBerjalan = logTransaksi[0].nilaiSaldoAwal;
+        logTransaksi.forEach((log) => {
+            if (log.isSaldoAwal) return;
+            saldoBerjalan += (log.pemasukan - log.pengeluaran);
+            let t = new Date(log.tanggal); let tglFormat = `${String(t.getDate()).padStart(2, '0')}/${String(t.getMonth() + 1).padStart(2, '0')}/${t.getFullYear()}`;
+            let trLog = document.createElement('tr');
+            
+            let tombolAksi = `<button class="btn btn-sm btn-warning py-0 px-1 me-1 text-white" data-bs-toggle="modal" data-bs-target="#modalLog" onclick="bukaModalEditLog('${log.id}')">✏️</button><button class="btn btn-sm btn-danger py-0 px-1" onclick="hapusLogTransaksi('${log.id}')">🗑️</button>`;
+            
+            trLog.innerHTML = `<td>${nomorBarisTabel++}</td><td>${tglFormat}</td><td class="text-start fw-bold">${log.nama}</td><td class="text-success fw-bold">${log.pemasukan > 0 ? 'Rp ' + log.pemasukan.toLocaleString('id-ID') : '-'}</td><td class="text-danger fw-bold">${log.pengeluaran > 0 ? 'Rp ' + log.pengeluaran.toLocaleString('id-ID') : '-'}</td><td class="fw-bold">Rp ${saldoBerjalan.toLocaleString('id-ID')}</td><td>${tombolAksi}</td>`;
+            tbodyLog.appendChild(trLog);
+        });
+
+        // SUMBANGAN SUKARELA RENDER
+        dataSukarela.sort((a, b) => new Date(a.tanggal) - new Date(b.tanggal));
+        let totalSukaRealTime = 0; dataSukarela.forEach(item => { totalSukaRealTime += (item.pemasukan - item.pengeluaran); });
+        document.getElementById('footTotalSukarela').innerText = `Rp ${totalSukaRealTime.toLocaleString('id-ID')}`;
+
+        const tbodySuka = document.getElementById('tabelSukarelaBody'); tbodySuka.innerHTML = "";
+        let nomorBarisSuka = 1;
+        let trAwalSuka = document.createElement('tr'); trAwalSuka.innerHTML = `<td>${nomorBarisSuka++}</td><td>-</td><td class="text-start fw-bold text-muted">Saldo Awal Periode</td><td>-</td><td>-</td><td class="fw-bold">Rp 0</td><td>🔒</td>`;
+        tbodySuka.appendChild(trAwalSuka);
+
+        let saldoBerjalanSuka = 0;
+        dataSukarela.forEach((item) => {
+            saldoBerjalanSuka += (item.pemasukan - item.pengeluaran);
+            let t = new Date(item.tanggal); let tglFormat = `${String(t.getDate()).padStart(2, '0')}/${String(t.getMonth() + 1).padStart(2, '0')}/${t.getFullYear()}`;
+            let trSuka = document.createElement('tr');
+            trSuka.innerHTML = `<td>${nomorBarisSuka++}</td><td>${tglFormat}</td><td class="text-start fw-bold">${item.nama}</td><td class="text-success fw-bold">${item.pemasukan > 0 ? 'Rp ' + item.pemasukan.toLocaleString('id-ID') : '-'}</td><td class="text-danger fw-bold">${item.pengeluaran > 0 ? 'Rp ' + item.pengeluaran.toLocaleString('id-ID') : '-'}</td><td class="fw-bold">Rp ${saldoBerjalanSuka.toLocaleString('id-ID')}</td><td><button class="btn btn-sm btn-warning py-0 px-1 me-1 text-white" data-bs-toggle="modal" data-bs-target="#modalSukarela" onclick="bukaModalEditSukarela('${item.id}')">✏️</button><button class="btn btn-sm btn-danger py-0 px-1" onclick="hapusSukarela('${item.id}')">🗑️</button></td>`;
+            tbodySuka.appendChild(trSuka);
+        });
+
+        // PERUBAHAN UTAMA: Memanggil fungsi sinkronisasi awan, bukan local storage lagi
+        sinkronisasiKeGoogleSheets();
+    }
+
+    function bukaModalTambahLog() { document.getElementById('formLogTransaksi').reset(); document.getElementById('logId').value = ""; document.getElementById('logTanggal').value = new Date().toISOString().split('T')[0]; document.getElementById('modalLogTitle').innerText = "Form Transaksi Operasional"; }
+    
+    function bukaModalEditLog(uid) { 
+        document.getElementById('modalLogTitle').innerText = "✏️ Edit Transaksi Operasional";
+        let target = logTransaksi.find(log => log.id === uid);
+        if(!target) return;
+        document.getElementById('logId').value = uid; 
+        document.getElementById('logTanggal').value = target.tanggal; 
+        document.getElementById('logNama').value = target.nama; 
+        if(parseInt(target.pemasukan) > 0) { 
+            document.getElementById('logJenis').value = "pemasukan"; 
+            document.getElementById('logJumlah').value = target.pemasukan; 
+        } else { 
+            document.getElementById('logJenis').value = "pengeluaran"; 
+            document.getElementById('logJumlah').value = target.pengeluaran; 
+        } 
+    }
+    
+    function simpanLogTransaksi(event) { 
+        event.preventDefault(); 
+        let uid = document.getElementById('logId').value; 
+        let tanggal = document.getElementById('logTanggal').value; 
+        let nama = document.getElementById('logNama').value; 
+        let jenis = document.getElementById('logJenis').value; 
+        let jumlah = parseInt(document.getElementById('logJumlah').value); 
+        
+        let objekLog = { tanggal, nama, pemasukan: jenis==="pemasukan"?jumlah:0, pengeluaran: jenis==="pengeluaran"?jumlah:0, isSaldoAwal: false }; 
+        
+        if (uid === "") { 
+            objekLog.id = "ID_" + Math.random().toString(36).substr(2, 9) + Date.now();
+            logTransaksi.push(objekLog); 
+        } else { 
+            let idx = logTransaksi.findIndex(log => log.id === uid);
+            if(idx !== -1) { objekLog.id = uid; logTransaksi[idx] = objekLog; }
+        } 
+        bootstrap.Modal.getInstance(document.getElementById('modalLog')).hide(); 
+        paksaHitungUlangKasSistem(); 
+        tampilkanData(); 
+    }
+    
+    function hapusLogTransaksi(uid) { 
+        if (confirm("Hapus transaksi operasional ini?")) { 
+            if(uid.startsWith("AUTO_")) {
+                listIdTerhapusDinamis.push(uid);
+                localStorage.setItem('listIdTerhapusSistem', JSON.stringify(listIdTerhapusDinamis));
+            }
+            logTransaksi = logTransaksi.filter(log => log.id !== uid); 
+            paksaHitungUlangKasSistem(); 
+            tampilkanData(); 
+        } 
+    }
+    
+    function bukaModalTambahSukarela() { document.getElementById('formSukarela').reset(); document.getElementById('sukarelaId').value = ""; document.getElementById('sukarelaTanggal').value = new Date().toISOString().split('T')[0]; document.getElementById('modalSukarelaTitle').innerText = "Form Sumbangan Sukarela"; }
+    
+    function bukaModalEditSukarela(uid) { 
+        document.getElementById('modalSukarelaTitle').innerText = "✏️ Edit Sumbangan Sukarela";
+        let target = dataSukarela.find(s => s.id === uid);
+        if(!target) return;
+        document.getElementById('sukarelaId').value = uid; 
+        document.getElementById('sukarelaTanggal').value = target.tanggal; 
+        document.getElementById('sukarelaNama').value = target.nama; 
+        if(target.pemasukan > 0) { 
+            document.getElementById('sukarelaJenis').value = "pemasukan"; 
+            document.getElementById('sukarelaJumlah').value = target.pemasukan; 
+        } else { 
+            document.getElementById('sukarelaJenis').value = "pengeluaran"; 
+            document.getElementById('sukarelaJumlah').value = target.pengeluaran; 
+        } 
+    }
+    
+    function simpanSukarela(event) { 
+        event.preventDefault(); 
+        let uid = document.getElementById('sukarelaId').value; 
+        let tanggal = document.getElementById('sukarelaTanggal').value; 
+        let nama = document.getElementById('sukarelaNama').value; 
+        let jenis = document.getElementById('sukarelaJenis').value; 
+        let jumlah = parseInt(document.getElementById('sukarelaJumlah').value); 
+        
+        let objekSuka = { tanggal, nama, pemasukan: jenis==="pemasukan"?jumlah:0, pengeluaran: jenis==="pengeluaran"?jumlah:0 }; 
+        
+        if (uid === "") { 
+            objekSuka.id = "ID_" + Math.random().toString(36).substr(2, 9) + Date.now();
+            dataSukarela.push(objekSuka); 
+        } else { 
+            let idx = dataSukarela.findIndex(s => s.id === uid);
+            if(idx !== -1) { objekSuka.id = uid; dataSukarela[idx] = objekSuka; }
+        } 
+        bootstrap.Modal.getInstance(document.getElementById('modalSukarela')).hide(); 
+        tampilkanData(); 
+    }
+    
+    function hapusSukarela(uid) { 
+        if (confirm("Hapus data sumbangan sukarela ini?")) { 
+            dataSukarela = dataSukarela.filter(s => s.id !== uid); 
+            tampilkanData(); 
+        } 
+    }
+</script>
+</body>
+</html>
