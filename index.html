@@ -3,216 +3,160 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aplikasi Kas Cluster - Mode Warga (Lihat Saja)</title>
+    <title>Rekapitulasi Kas Cluster The Royal Dago</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { padding-top: 20px; background-color: #f8f9fa; }
-        .sudah-bayar { background-color: #d1e7dd !important; color: #0f5132; font-weight: bold; }
-        .belum-bayar { background-color: #f8d7da !important; color: #842029; }
-        .align-middle td, .align-middle th { vertical-align: middle !important; }
-        .table-footer { background-color: #e9ecef; font-weight: bold; }
-        .tabel-kas-padat th, .tabel-kas-padat td { font-size: 0.85rem !important; padding: 6px 4px !important; }
-        .area-cetak { background-color: #f8f9fa; padding: 10px; }
-        
-        tr { page-break-inside: avoid !important; break-inside: avoid !important; }
-        .card { page-break-inside: avoid !important; break-inside: avoid !important; }
+        body {
+            background-color: #f8f9fa;
+        }
+        .navbar-custom {
+            background-color: #0066cc;
+            color: white;
+        }
+        .card-header-custom {
+            background-color: #ffffff;
+            font-weight: bold;
+            border-bottom: 2px solid #dee2e6;
+        }
+        .table-sumbangan thead {
+            background-color: #d1e7dd;
+        }
+        .table-operasional thead {
+            background-color: #e2e3e5;
+        }
+        .btn-pdf { background-color: #dc3545; color: white; }
+        .btn-excel { background-color: #198754; color: white; }
+        .btn-png { background-color: #0dcaf0; color: white; }
+        .btn-pdf:hover, .btn-excel:hover, .btn-png:hover { color: white; opacity: 0.9; }
     </style>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
 
-<div class="modal fade" id="modalAuthLogin" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-sm">
-    <div class="modal-content">
-      <div class="modal-header bg-dark text-white">
-        <h6 class="modal-title fw-bold">🔐 Verifikasi Akses Pengurus</h6>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <form onsubmit="prosesValidasiLogin(event)">
-            <div class="mb-2">
-                <label class="form-label small fw-bold text-secondary">Username:</label>
-                <input type="text" id="loginUser" class="form-control form-control-sm" placeholder="Masukkan username" required>
-            </div>
-            <div class="mb-3">
-                <label class="form-label small fw-bold text-secondary">Password:</label>
-                <input type="password" id="loginPass" class="form-control form-control-sm" placeholder="•••••" required>
-                <div class="form-text small text-muted mt-1">Bawaan: <code>admin</code> / <code>admin</code></div>
-            </div>
-            <button type="submit" class="btn btn-primary btn-sm w-100 fw-bold">Masuk Mode Admin</button>
-        </form>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div id="kontenAplikasi" class="container-fluid px-4 area-cetak">
-    <div class="no-print d-flex justify-content-between align-items-center mb-4 p-3 bg-primary text-white rounded shadow-sm">
-        <h4 class="mb-0 fw-bold">🏡 REKAPITULASI KAS CLUSTER THE ROYAL DAGO</h4>
-        <div>
-            <span class="me-3 fw-bold bg-dark bg-opacity-25 py-1 px-2 rounded small">🌐 Mode Pantau Warga</span>
-            <a href="admin.html" class="btn btn-light btn-sm fw-bold">Login Admin</a>
-        </div>
-    </div>
-
-    <div class="card p-3 shadow-sm mb-4 border-primary bg-white no-print">
-        <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-2">
-            <div>
-                <h6 class="fw-bold text-primary mb-1">🖨️ Cetak & Ekspor Laporan Kas</h6>
-                <small class="text-muted">Unduh seluruh pembukuan cluster ke dalam format dokumen pilihan.</small>
-            </div>
-            <div class="d-flex gap-2 flex-wrap">
-                <button class="btn btn-danger fw-bold shadow-sm btn-sm" onclick="eksporKePDF()">📄 Unduh PDF</button>
-                <button class="btn btn-success fw-bold shadow-sm btn-sm" onclick="eksporKeExcel()">📊 Unduh Excel (XL)</button>
-                <button class="btn btn-info text-white fw-bold shadow-sm btn-sm" onclick="eksporKePNG()">🖼️ Unduh Gambar (PNG)</button>
+    <nav class="navbar navbar-custom navbar-expand-lg px-3 mb-4 shadow-sm">
+        <div class="container-fluid">
+            <span class="navbar-brand text-white fw-bold">
+                <i class="fa-solid fa-house-chimney-user me-2"></i>REKAPITULASI KAS CLUSTER THE ROYAL DAGO
+            </span>
+            <div class="d-flex gap-2 mt-2 mt-lg-0">
+                <button class="btn btn-info btn-sm text-white fw-bold"><i class="fa-solid fa-eye me-1"></i> Mode Pantau Warga</button>
+                <button class="btn btn-light btn-sm fw-bold shadow-sm" id="btn-login-trigger"><i class="fa-solid fa-right-to-bracket me-1"></i> Login Admin</button>
             </div>
         </div>
-    </div>
+    </nav>
 
-    <div class="row g-4 mb-4">
-        <div class="col-12 col-lg-6">
-            <div class="card p-3 shadow-sm h-100 bg-white">
-                <h5 class="fw-bold text-dark mb-3">📋 Tabel Kas Bulanan Warga</h5>
-                <div class="table-responsive">
-                    <table class="table table-bordered align-middle text-center tabel-kas-padat">
-                        <thead class="table-dark">
-                            <tr id="tabelHeader"></tr>
-                        </thead>
-                        <tbody id="tabelBody"></tbody>
-                        <tfoot id="tabelFooter" class="table-footer"></tfoot>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-12 col-lg-6">
-            <div class="card p-3 shadow-sm border-success bg-white h-100">
-                <h5 class="fw-bold text-success mb-3">🤝 Tabel Sumbangan Sukarela</h5>
-                <div class="d-flex flex-wrap align-items-center gap-1 mb-2 bg-light p-2 rounded border no-print">
-                    <span class="fw-bold text-muted small me-1">Cari:</span>
-                    <input type="date" id="searchSukaMulai" class="form-control form-control-sm" style="width: 120px;">
-                    <input type="date" id="searchSukaSelesai" class="form-control form-control-sm" style="width: 120px;">
-                    <button class="btn btn-sm btn-success px-2 py-1" onclick="cariRentangSukarela()">🔍</button>
-                    <button class="btn btn-sm btn-secondary px-2 py-1" onclick="resetCariSukarela()">🔄</button>
-                </div>
-                <div class="table-responsive">
-                    <table class="table table-bordered table-striped align-middle text-center" style="font-size: 0.85rem;">
-                        <thead class="table-success text-dark">
-                            <tr>
-                                <th style="width: 40px;">No</th>
-                                <th style="width: 100px;">Tanggal</th>
-                                <th class="text-start">Keterangan Sumbangan</th>
-                                <th style="width: 100px;">Masuk</th>
-                                <th style="width: 100px;">Keluar</th>
-                                <th style="width: 110px;">Saldo</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tabelSukarelaBody"></tbody>
-                        <tfoot class="table-footer bg-light">
-                            <tr>
-                                <td colspan="5" class="text-end fw-bold text-success" style="font-size: 12px;">TOTAL REAL TIME:</td>
-                                <td id="footTotalSukarela" class="fw-bold text-dark text-center" style="font-size: 13px;">Rp 0</td>
-                            </tr>
-                        </tfoot>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="card p-3 shadow-sm mb-4 bg-white">
-        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center mb-3 gap-3">
-            <h5 class="fw-bold text-secondary mb-0">📑 Log Transaksi Operasional</h5>
-            <div class="d-flex flex-wrap align-items-center gap-2 no-print">
-                <label class="fw-bold text-muted small mb-0">Mulai:</label>
-                <input type="date" id="searchTanggalMulai" class="form-control form-control-sm" style="width: 140px;">
-                <label class="fw-bold text-muted small mb-0">Selesai:</label>
-                <input type="date" id="searchTanggalSelesai" class="form-control form-control-sm" style="width: 140px;">
-                <button class="btn btn-sm btn-primary fw-bold" onclick="cariRentangLogTransaksi()">🔍 Cari</button>
-                <button class="btn btn-sm btn-secondary fw-bold" onclick="resetCariLog()">🔄 Reset</button>
-            </div>
-        </div>
-        <div class="table-responsive">
-            <table class="table table-bordered table-striped align-middle text-center">
-                <thead class="table-secondary">
-                    <tr>
-                        <th style="width: 50px;">No</th>
-                        <th style="width: 130px;">Tanggal</th>
-                        <th class="text-start">Nama Transaksi</th>
-                        <th style="width: 180px;">Pemasukan</th>
-                        <th style="width: 180px;">Pengeluaran</th>
-                        <th style="width: 200px;">Total Saldo</th>
-                    </tr>
-                </thead>
-                <tbody id="tabelLogBody"></tbody>
-            </table>
-        </div>
-    </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
-<script>
-    // GANTI DENGAN LINK WEB APP GOOGLE ASLI ANDA
-    const API_URL = "https://script.google.com/macros/s/XXXXX_Kode_Panjang_Anda_XXXXX/exec"; 
-
-    // Deklarasi Variabel Global agar tidak memicu error buntu
-    let dataWarga = [];
-    let logTransaksi = [];
-    let dataSukarela = [];
-
-    window.onload = function() {
-        muatDataDariGoogleSheets();
-    };
-
-    function muatDataDariGoogleSheets() {
-        document.getElementById('tabelBody').innerHTML = `<tr><td colspan="10" class="text-center text-muted py-3">⏳ Sedang mengambil data kas dari cloud...</td></tr>`;
+    <div class="container-fluid px-4">
         
-        fetch(API_URL)
-            .then(response => response.json())
-            .then(dataCloud => {
-                dataWarga = dataCloud.warga || [];
-                logTransaksi = dataCloud.log || [];
-                dataSukarela = dataCloud.sukarela || [];
-                
-                tampilkanData();
-            })
-            .catch(error => {
-                console.error("Eror API:", error);
-                document.getElementById('tabelBody').innerHTML = `<tr><td colspan="10" class="text-center text-danger py-3">❌ Gagal memuat data dari server cloud kas. Periksa koneksi internet Anda.</td></tr>`;
-            });
-    }
+        <div class="card mb-4 shadow-sm">
+            <div class="card-body d-md-flex justify-content-between align-items-center py-3">
+                <div>
+                    <h5 class="fw-bold mb-1 text-primary"><i class="fa-solid fa-print me-2"></i>Cetak & Ekspor Laporan Kas</h5>
+                    <small class="text-muted">Unduh seluruh pembukuan cluster ke dalam format dokumen pilihan.</small>
+                </div>
+                <div class="d-flex gap-2 mt-3 mt-md-0 flex-wrap">
+                    <button class="btn btn-pdf btn-sm fw-bold"><i class="fa-solid fa-file-pdf me-1"></i> Unduh PDF</button>
+                    <button class="btn btn-excel btn-sm fw-bold"><i class="fa-solid fa-file-excel me-1"></i> Unduh Excel (XL)</button>
+                    <button class="btn btn-png btn-sm fw-bold"><i class="fa-solid fa-file-image me-1"></i> Unduh Gambar (PNG)</button>
+                </div>
+            </div>
+        </div>
 
-    function prosesValidasiLogin(event) {
-        event.preventDefault();
-        const user = document.getElementById('loginUser').value;
-        const pass = document.getElementById('loginPass').value;
+        <div class="row g-4 mb-4">
+            <div class="col-lg-6">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-header card-header-custom py-3 text-secondary">
+                        <i class="fa-solid fa-clipboard-list me-2 text-warning"></i> Tabel Kas Bulanan Warga
+                    </div>
+                    <div class="card-body d-flex align-items-center justify-content-center bg-white">
+                        <div class="alert alert-danger w-100 text-center m-0" role="alert">
+                            <i class="fa-solid fa-circle-xmark me-2"></i> Gagal memuat data dari server cloud kas. Periksa koneksi internet Anda.
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-        // Validasi default bawaan script Anda
-        if (user === "admin" && pass === "admin") {
-            alert("Login Berhasil! Mengalihkan ke halaman admin.");
-            window.location.href = "admin.html";
-        } else {
-            alert("Username atau Password salah!");
-        }
-    }
+            <div class="col-lg-6">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-header card-header-custom py-3 text-success">
+                        <i class="fa-solid fa-heart me-2 text-warning"></i> Tabel Sumbangan Sukarela
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-2 mb-3 align-items-center bg-light p-2 rounded">
+                            <div class="col-auto"><small class="fw-bold">Cari:</small></div>
+                            <div class="col"><input type="date" class="form-control form-control-sm"></div>
+                            <div class="col"><input type="date" class="form-control form-control-sm"></div>
+                            <div class="col-auto">
+                                <button class="btn btn-success btn-sm"><i class="fa-solid fa-magnifying-glass"></i></button>
+                                <button class="btn btn-secondary btn-sm"><i class="fa-solid fa-rotate"></i></button>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped table-sumbangan align-middle">
+                                <thead>
+                                    <tr class="text-center small fw-bold">
+                                        <th>No</th>
+                                        <th>Tanggal</th>
+                                        <th>Keterangan Sumbangan</th>
+                                        <th>Masuk</th>
+                                        <th>Keluar</th>
+                                        <th>Saldo</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td colspan="6" class="text-center text-muted py-4 small">Belum ada data tersedia</td>
+                                    </tr>
+                                </tbody>
+                                <tfoot>
+                                    <tr class="fw-bold table-light text-end">
+                                        <td colspan="5" class="text-success small">TOTAL REAL TIME:</td>
+                                        <td>Rp 0</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-    // Fungsi Render Cadangan agar skrip tidak pecah saat data cloud kosong/gagal
-    function tampilkanData() {
-        console.log("Data berhasil dirender ke layar.");
-        // Tambahkan logika rendering visual tabel buatan Anda di bawah ini jika diperlukan
-    }
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header card-header-custom py-3 d-md-flex justify-content-between align-items-center">
+                <span class="text-dark"><i class="fa-solid fa-file-invoice-dollar me-2 text-secondary"></i> Log Transaksi Operasional</span>
+                <div class="d-flex gap-2 align-items-center mt-2 mt-md-0 flex-wrap">
+                    <small class="fw-bold">Mulai:</small>
+                    <input type="date" class="form-control form-control-sm d-inline-block w-auto">
+                    <small class="fw-bold">Selesai:</small>
+                    <input type="date" class="form-control form-control-sm d-inline-block w-auto">
+                    <button class="btn btn-primary btn-sm fw-bold"><i class="fa-solid fa-magnifying-glass me-1"></i> Cari</button>
+                    <button class="btn btn-secondary btn-sm fw-bold"><i class="fa-solid fa-rotate me-1"></i> Reset</button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped table-operasional align-middle">
+                        <thead>
+                            <tr class="text-center small fw-bold table-secondary">
+                                <th>No</th>
+                                <th>Tanggal</th>
+                                <th>Nama Transaksi</th>
+                                <th>Pemasukan</th>
+                                <th>Pengeluaran</th>
+                                <th>Total Saldo</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-4 small">Belum ada data transaksi operasional</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
 
-    // Placeholder fungsi cetak/ekspor agar tidak memicu uncaught error
-    function eksporKePDF() { alert("Fitur PDF siap diproses."); }
-    function eksporKeExcel() { alert("Fitur Excel siap diproses."); }
-    function eksporKePNG() { alert("Fitur Gambar siap diproses."); }
-    function cariRentangSukarela() {}
-    function resetCariSukarela() {}
-    function cariRentangLogTransaksi() {}
-    function resetCariLog() {}
-</script>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
