@@ -153,171 +153,30 @@
 </div>
 
 <script>
-    // ==========================================
-    // SEBELUM DI-UPLOAD, GANTI URL DI BAWAH INI DENGAN URL WEB APP DARI GOOGLE APPS SCRIPT ANDA
-    // ==========================================
-    const API_URL = "PASANG_URL_WEB_APP_APPS_SCRIPT_DI_SINI"; 
+    // GANTI DENGAN LINK WEB APP GOOGLE ASLI ANDA
+const API_URL = "https://script.google.com/macros/s/XXXXX_Kode_Panjang_Anda_XXXXX/exec"; 
 
-    let totalPerBulanGlobal = {};
-    let filterTanggalMulai = ""; let filterTanggalSelesai = "";
-    let filterSukaMulai = ""; let filterSukaSelesai = "";
-    const namaBulanIndo = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+window.onload = function() {
+    muatDataDariGoogleSheets();
+};
 
-    function dapatkanDaftar2Bulan() {
-        let hariIni = new Date(); let tahun = hariIni.getFullYear(); let bulanSekarang = hariIni.getMonth(); let tanggalSekarang = hariIni.getDate();
-        if (tanggalSekarang >= 20) { bulanSekarang = bulanSekarang + 1; }
-        let daftarBulan = [];
-        for (let i = 1; i >= 0; i--) {
-            let d = new Date(tahun, bulanSekarang - i, 1);
-            let m = d.getMonth(); let y = d.getFullYear();
-            daftarBulan.push({ id: `${y}-${String(m + 1).padStart(2, '0')}`, label: `${namaBulanIndo[m]} ${y}` });
-        }
-        return daftarBulan;
-    }
-    let bulanAktif = dapatkanDaftar2Bulan();
-
-    // Data sekarang di-set kosong, karena akan diisi via internet dari Google Sheets
-    let dataWarga = [];
-    let logTransaksi = [];
-    let dataSukarela = [];
-
-    window.onload = function() {
-        // Efek loading sederhana agar aplikasi terasa profesional saat menarik data
-        document.getElementById('tabelBody').innerHTML = `<tr><td colspan="10" class="text-center py-4">⏳ Sedang menyelaraskan data dengan Google Sheets...</td></tr>`;
-        
-        fetch(API_URL)
-          .then(res => res.json())
-          .then(data => {
-              dataWarga = data.dataWarga || [];
-              logTransaksi = data.logTransaksi || [];
-              dataSukarela = data.dataSukarela || [];
-
-              logTransaksi = logTransaksi.filter(log => {
-                  if(log.isSaldoAwal) return true;
-                  let n = log.nama.trim().toLowerCase();
-                  if(n.includes("maret") || n.includes("april")) return false;
-                  return true;
-              });
-
-              if(logTransaksi.length === 0) {
-                  logTransaksi = [{ id: "SALDO_AWAL", tanggal: "2026-01-01", nama: "Saldo Awal", pemasukan: 0, pengeluaran: 0, nilaiSaldoAwal: 12908, isSaldoAwal: true }];
-              }
-
-              tampilkanData();
-          })
-          .catch(err => {
-              document.getElementById('tabelBody').innerHTML = `<tr><td colspan="10" class="text-center text-danger py-4">❌ Gagal memuat data dari server cloud kas. Periksa koneksi internet Anda.</td></tr>`;
-          });
-    };
-
-    function prosesValidasiLogin(event) {
-        event.preventDefault();
-        let uInput = document.getElementById('loginUser').value;
-        let pInput = document.getElementById('loginPass').value;
-        let validUser = localStorage.getItem('usernameKasCluster') || "admin";
-        let validPass = localStorage.getItem('passwordKasCluster') || "admin";
-
-        if (uInput === validUser && pInput === validPass) {
-            bootstrap.Modal.getInstance(document.getElementById('modalAuthLogin')).hide();
-            window.location.href = "admin.html";
-        } else {
-            alert("Username atau Password Salah!");
-        }
-    }
-
-    function tampilkanData() {
-        logTransaksi.sort((a, b) => { if (a.isSaldoAwal) return -1; if (b.isSaldoAwal) return 1; return new Date(a.tanggal) - new Date(b.tanggal); });
-        let hitungSaldoTerakhir = logTransaksi[0].nilaiSaldoAwal;
-        logTransaksi.forEach((log) => { if (!log.isSaldoAwal) { hitungSaldoTerakhir += (log.pemasukan - log.pengeluaran); } });
-
-        const thead = document.getElementById('tabelHeader');
-        let headerHTML = `<th style="width: 35px;">No</th><th class="text-start">Nama</th><th style="width: 45px;">Blok</th><th style="width: 100px;">Nominal</th>`;
-        bulanAktif.forEach(b => { headerHTML += `<th>${b.label.split(' ')[0]}</th>`; });
-        thead.innerHTML = headerHTML;
-
-        const tbody = document.getElementById('tabelBody'); tbody.innerHTML = "";
-        bulanAktif.forEach(b => { totalPerBulanGlobal[b.id] = 0; });
-
-        dataWarga.forEach((warga, index) => {
-            let tr = document.createElement('tr'); let isiMasingMasingKolomBulan = "";
-            bulanAktif.forEach(b => {
-                let statusLunas = warga.pembayaran[b.id] || false;
-                if (statusLunas) { totalPerBulanGlobal[b.id] += parseInt(warga.nominal); }
-                isiMasingMasingKolomBulan += `<td class="${statusLunas ? 'sudah-bayar' : 'belum-bayar'}">${statusLunas ? '✔️' : '❌'}</td>`;
-            });
-            tr.innerHTML = `<td>${index + 1}</td><td class="text-start fw-bold">${warga.nama}</td><td>${warga.blok}</td><td class="text-primary fw-bold">Rp ${parseInt(warga.nominal).toLocaleString('id-ID')}</td>${isiMasingMasingKolomBulan}`;
-            tbody.appendChild(tr);
+function muatDataDariGoogleSheets() {
+    // Tampilkan pesan loading di tabel sementara menunggu data
+    document.getElementById('tabelBody').innerHTML = `<tr><td colspan="10" class="text-center text-muted py-3">⏳ Sedang mengambil data kas dari cloud...</td></tr>`;
+    
+    fetch(API_URL)
+        .then(response => response.json())
+        .then(dataCloud => {
+            // Salin data dari cloud ke sistem lokal agar fitur cetak tetap bekerja
+            dataWarga = dataCloud.warga || [];
+            logTransaksi = dataCloud.log || [];
+            dataSukarela = dataCloud.sukarela || [];
+            
+            // Render ulang tabel dengan data asli dari Google Sheets
+            tampilkanData();
+        })
+        .catch(error => {
+            console.error("Eror API:", error);
+            document.getElementById('tabelBody').innerHTML = `<tr><td colspan="10" class="text-center text-danger py-3">❌ Gagal memuat data dari server cloud kas. Periksa koneksi internet Anda.</td></tr>`;
         });
-
-        const tfoot = document.getElementById('tabelFooter');
-        let footerHTML = `<td colspan="3" class="text-end bg-dark text-white fw-bold" style="font-size:11px;">SISA KAS:</td><td class="fw-bold bg-dark text-warning" style="font-size:11px;">Rp ${hitungSaldoTerakhir.toLocaleString('id-ID')}</td>`;
-        bulanAktif.forEach(b => { footerHTML += `<td class="text-success fw-bold" style="font-size:11px;">Rp ${totalPerBulanGlobal[b.id].toLocaleString('id-ID')}</td>`; });
-        tfoot.innerHTML = footerHTML;
-
-        // OPERASIONAL LOG
-        const tbodyLog = document.getElementById('tabelLogBody'); tbodyLog.innerHTML = "";
-        let nomorBarisTabel = 1;
-        let trAwal = document.createElement('tr'); trAwal.innerHTML = `<td>${nomorBarisTabel++}</td><td>-</td><td class="text-start fw-bold">Saldo Awal</td><td>-</td><td>-</td><td class="fw-bold">Rp ${logTransaksi[0].nilaiSaldoAwal.toLocaleString('id-ID')}</td>`;
-        tbodyLog.appendChild(trAwal);
-
-        let tglMulaiFilter = filterTanggalMulai ? new Date(filterTanggalMulai) : null; 
-        let tglSelesaiFilter = filterTanggalSelesai ? new Date(filterTanggalSelesai) : null;
-
-        let saldoAwalDinamis = logTransaksi[0].nilaiSaldoAwal || 12908;
-        if (tglMulaiFilter) { 
-            logTransaksi.forEach((log) => { 
-                if (!log.isSaldoAwal && log.tanggal && new Date(log.tanggal) < tglMulaiFilter) { 
-                    saldoAwalDinamis += (parseInt(log.pemasukan) - parseInt(log.pengeluaran)); 
-                } 
-            }); 
-        }
-
-        let saldoBerjalan = saldoAwalDinamis;
-        logTransaksi.forEach((log) => {
-            if (log.isSaldoAwal) return; 
-            let tglArus = log.tanggal ? new Date(log.tanggal) : null;
-            if (tglMulaiFilter && tglSelesaiFilter && tglArus) { 
-                if (tglArus < tglMulaiFilter || tglArus > tglSelesaiFilter) return; 
-            }
-            saldoBerjalan += (parseInt(log.pemasukan) - parseInt(log.pengeluaran));
-            let t = new Date(log.tanggal); let tglFormat = `${String(t.getDate()).padStart(2, '0')}/${String(t.getMonth() + 1).padStart(2, '0')}/${t.getFullYear()}`;
-            let trLog = document.createElement('tr');
-            trLog.innerHTML = `<td>${nomorBarisTabel++}</td><td>${tglFormat}</td><td class="text-start fw-bold">${log.nama}</td><td class="text-success fw-bold">${log.pemasukan > 0 ? 'Rp ' + parseInt(log.pemasukan).toLocaleString('id-ID') : '-'}</td><td class="text-danger fw-bold">${log.pengeluaran > 0 ? 'Rp ' + parseInt(log.pengeluaran).toLocaleString('id-ID') : '-'}</td><td class="fw-bold">Rp ${saldoBerjalan.toLocaleString('id-ID')}</td>`;
-            tbodyLog.appendChild(trLog);
-        });
-
-        // SUMBANGAN SUKARELA
-        dataSukarela.sort((a, b) => new Date(a.tanggal) - new Date(b.tanggal));
-        let totalSukaRealTime = 0; dataSukarela.forEach(item => { totalSukaRealTime += (item.pemasukan - item.pengeluaran); });
-        document.getElementById('footTotalSukarela').innerText = `Rp ${totalSukaRealTime.toLocaleString('id-ID')}`;
-
-        const tbodySuka = document.getElementById('tabelSukarelaBody'); tbodySuka.innerHTML = "";
-        let nomorBarisSuka = 1; let tglMulaiSukaFilter = filterSukaMulai ? new Date(filterSukaMulai) : null; let tglSelesaiSukaFilter = filterSukaSelesai ? new Date(filterSukaSelesai) : null;
-        let saldoAwalSukaDinamis = 0;
-        if (tglMulaiSukaFilter) { dataSukarela.forEach((item) => { if (new Date(item.tanggal) < tglMulaiSukaFilter) { saldoAwalSukaDinamis += (item.pemasukan - item.pengeluaran); } }); }
-
-        let trAwalSuka = document.createElement('tr'); trAwalSuka.innerHTML = `<td>${nomorBarisSuka++}</td><td>-</td><td class="text-start fw-bold text-muted">Saldo Awal Periode</td><td>-</td><td>-</td><td class="fw-bold">Rp ${saldoAwalSukaDinamis.toLocaleString('id-ID')}</td>`;
-        tbodySuka.appendChild(trAwalSuka);
-
-        let saldoBerjalanSuka = saldoAwalSukaDinamis;
-        dataSukarela.forEach((item) => {
-            let tglArus = new Date(item.tanggal); if (tglMulaiSukaFilter && tglSelesaiSukaFilter) { if (tglArus < tglMulaiSukaFilter || tglArus > tglSelesaiSukaFilter) return; }
-            saldoBerjalanSuka += (item.pemasukan - item.pengeluaran);
-            let t = new Date(item.tanggal); let tglFormat = `${String(t.getDate()).padStart(2, '0')}/${String(t.getMonth() + 1).padStart(2, '0')}/${t.getFullYear()}`;
-            let trSuka = document.createElement('tr');
-            trSuka.innerHTML = `<td>${nomorBarisSuka++}</td><td>${tglFormat}</td><td class="text-start fw-bold">${item.nama}</td><td class="text-success fw-bold">${item.pemasukan > 0 ? 'Rp ' + item.pemasukan.toLocaleString('id-ID') : '-'}</td><td class="text-danger fw-bold">${item.pengeluaran > 0 ? 'Rp ' + item.pengeluaran.toLocaleString('id-ID') : '-'}</td><td class="fw-bold">Rp ${saldoBerjalanSuka.toLocaleString('id-ID')}</td>`;
-            tbodySuka.appendChild(trSuka);
-        });
-    }
-
-    function cariRentangLogTransaksi() { let m = document.getElementById('searchTanggalMulai').value; let s = document.getElementById('searchTanggalSelesai').value; if (!m || !s) return; filterTanggalMulai = m; filterTanggalSelesai = s; tampilkanData(); }
-    function resetCariLog() { document.getElementById('searchTanggalMulai').value = ""; document.getElementById('searchTanggalSelesai').value = ""; filterTanggalMulai = ""; filterTanggalSelesai = ""; tampilkanData(); }
-    function cariRentangSukarela() { let m = document.getElementById('searchSukaMulai').value; let s = document.getElementById('searchSukaSelesai').value; if (!m || !s) return; filterSukaMulai = m; filterSukaSelesai = s; tampilkanData(); }
-    function resetCariSukarela() { document.getElementById('searchSukaMulai').value = ""; document.getElementById('searchSukaSelesai').value = ""; filterSukaMulai = ""; filterSukaSelesai = ""; tampilkanData(); }
-    function eksporKePNG() { const a = document.getElementById('kontenAplikasi'); const n = document.querySelectorAll('.no-print'); n.forEach(e => e.style.visibility = 'hidden'); html2canvas(a, { scale: 3, useCORS: true }).then(c => { const l = document.createElement('a'); l.download = 'Laporan_Kas_Royal_Dago.png'; l.href = c.toDataURL('image/png'); l.click(); n.forEach(e => e.style.visibility = 'visible'); }); }
-    function eksporKePDF() { const elemen = document.getElementById('kontenAplikasi'); html2pdf().set({ margin: [10, 10, 10, 10], filename: 'Laporan_Kas_The_Royal_Dago.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a3', orientation: 'landscape' }, pagebreak: { mode: ['css', 'legacy'], before: '.card', avoid: 'tr' } }).from(elemen).save(); }
-    function eksporKeExcel() { const wb = XLSX.utils.book_new(); let rK = [["No", "Nama Warga", "Blok Hunian", "Nominal Kas"]]; bulanAktif.forEach(b => rK[0].push(b.label)); dataWarga.forEach((w, i) => { let r = [i+1, w.nama, w.blok, w.nominal]; bulanAktif.forEach(b => { r.push(w.pembayaran[b.id] ? "Lunas" : "Belum Bayar"); }); rK.push(r); }); XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rK), "Kas Bulanan Warga"); let rO = [["No", "Tanggal", "Keterangan Transaksi", "Pemasukan (Rp)", "Pengeluaran (Rp)", "Total Saldo (Rp)"]]; let sO = parseInt(logTransaksi[0].nilaiSaldoAwal || 12908); rO.push([1, "-", "Saldo Awal", 0, 0, sO]); logTransaksi.forEach((l, i) => { if (l.isSaldoAwal) return; sO += (l.pemasukan - l.pengeluaran); rO.push([rO.length, l.tanggal || "-", l.nama, l.pemasukan, l.pengeluaran, sO]); }); XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rO), "Log Operasional"); let rS = [["No", "Tanggal", "Keterangan Sumbangan", "Pemasukan (Rp)", "Pengeluaran (Rp)", "Total Saldo (Rp)"]]; let sS = 0; rS.push([1, "-", "Saldo Awal Periode", 0, 0, sS]); dataSukarela.forEach((s) => { sS += (s.pemasukan - s.pengeluaran); rS.push([rS.length, s.tanggal, s.nama, s.pemasukan, s.pengeluaran, sS]); }); rS.push(["", "", "TOTAL SALDO SUKARELA REAL TIME:", "", "", sS]); XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rS), "Sumbangan Sukarela"); XLSX.writeFile(wb, "Laporan_Pembukuan_Kas_Royal_Dago.xlsx"); }
-</script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+}
