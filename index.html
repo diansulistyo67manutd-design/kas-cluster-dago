@@ -216,156 +216,153 @@
     </div>
 
     <script>
-        // MASUKKAN URL WEB APP SCRIPT ANDA DI SINI
-        const SHEET_WEBAPP_URL = "https://diansulistyo67manutd-design.github.io/kas-cluster-dago/";
+       // MASUKKAN URL WEB APP SCRIPT BARU ANDA DI SINI
+const SHEET_WEBAPP_URL = "GANTI_DENGAN_URL_WEB_APP_ANDA_YANG_BARU";
 
-        const loading = document.getElementById('loading');
-        const loginPage = document.getElementById('login-page');
-        const wargaPage = document.getElementById('warga-page');
-        const adminPage = document.getElementById('admin-page');
+const loading = document.getElementById('loading');
+const loginPage = document.getElementById('login-page');
+const wargaPage = document.getElementById('warga-page');
+const adminPage = document.getElementById('admin-page');
 
-        // Fungsi Tampilkan/Sembunyikan Loading overlay
-        function toggleLoading(show) {
-            if(show) loading.classList.remove('hidden');
-            else loading.classList.add('hidden');
+function toggleLoading(show) {
+    if(show) loading.classList.remove('hidden');
+    else loading.classList.add('hidden');
+}
+
+// Fungsi pembantu untuk mengirim data ke Google Sheet tanpa hambatan CORS (JSONP)
+function sendToGoogleSheet(params, callbackName) {
+    // Hapus script JSONP yang lama jika ada
+    const oldScript = document.getElementById('jsonp-script');
+    if (oldScript) oldScript.remove();
+
+    // Bangun URL dengan parameter
+    let url = SHEET_WEBAPP_URL + "?" + params + "&callback=" + callbackName + "&_nocache=" + new Date().getTime();
+
+    // Buat element script baru untuk menembus CORS
+    const script = document.createElement('script');
+    script.id = 'jsonp-script';
+    script.src = url;
+    document.body.appendChild(script);
+}
+
+// ==========================================
+// 1. PROSES FORM LOGIN
+// ==========================================
+document.getElementById('login-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    toggleLoading(true);
+
+    const user = encodeURIComponent(document.getElementById('username').value.trim());
+    const pass = encodeURIComponent(document.getElementById('password').value);
+
+    sendToGoogleSheet(`action=login&username=${user}&password=${pass}`, 'handleLoginResponse');
+});
+
+// Callback penanganan hasil login
+function handleLoginResponse(response) {
+    toggleLoading(false);
+    if (response.status === "success") {
+        loginPage.classList.add('hidden');
+        if (response.role === 'admin') {
+            adminPage.classList.remove('hidden');
+        } else {
+            wargaPage.classList.remove('hidden');
         }
+        loadDatabaseData(); // Muat data tabel
+    } else {
+        alert("Gagal Masuk: " + response.message);
+    }
+}
 
-        // 1. FITUR LOGIN VIA SPREADSHEET
-        document.getElementById('login-form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            toggleLoading(true);
+// ==========================================
+// 2. PROSES GANTI PASSWORD (SINKRON KE GOOGLE SHEET)
+// ==========================================
+document.getElementById('change-password-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    toggleLoading(true);
 
-            const user = document.getElementById('username').value;
-            const pass = document.getElementById('password').value;
+    const oldPass = encodeURIComponent(document.getElementById('old-pass').value);
+    const newPass = encodeURIComponent(document.getElementById('new-pass').value);
 
-            URLSearchParams (SHEET_WEBAPP_URL, {
-                method: "POST",
-                mode: "no-cors", // Mengabaikan kendala CORS browser
-                body: JSON.stringify({
-                    action: "login",
-                    username: user,
-                    password: pass
-                })
-            })
-            .then(() => {
-                // Karena menggunakan 'no-cors' untuk simplifikasi gratis, kita lakukan verifikasi lokal berdasarkan input
-                // Sambil sistem di Spreadsheet memverifikasi datanya secara bayangan di server
-                toggleLoading(false);
-                if (user.toLowerCase() === 'admin') {
-                    loginPage.classList.add('hidden');
-                    adminPage.classList.remove('hidden');
-                    loadDatabaseData();
-                } else if (user.toLowerCase() === 'warga') {
-                    loginPage.classList.add('hidden');
-                    wargaPage.classList.remove('hidden');
-                    loadDatabaseData();
-                } else {
-                    alert("Akses diproses. Jika gagal masuk, periksa kembali kecocokan data.");
-                }
-            })
-            .catch(err => {
-                toggleLoading(false);
-                alert("Gagal koneksi ke server database.");
-            });
-        });
+    sendToGoogleSheet(`action=changePassword&oldPassword=${oldPass}&newPassword=${newPass}`, 'handleChangePasswordResponse');
+});
 
-        // 2. AMBIL DATA DARI SPREADSHEET (Untuk Warga & Admin)
-        function loadDatabaseData() {
-            fetch(SHEET_WEBAPP_URL)
-            .then(res => res.json())
-            .then(data => {
-                renderTable(data.sumbangan, 'warga-sumbangan-table', 'admin-sumbangan-table', true);
-                renderTable(data.operasional, 'warga-operasional-table', 'admin-operasional-table', false);
-            })
-            .catch(() => {
-                // Jika database kosong, tampilkan baris kosong yang rapi
-                renderEmptyRow();
-            });
-        }
+// Callback penanganan hasil ganti password
+function handleChangePasswordResponse(response) {
+    toggleLoading(false);
+    if (response.status === "success") {
+        alert(response.message); // Menampilkan pesan sukses dari Google Sheet
+        closeModal('password-modal');
+        document.getElementById('change-password-form').reset();
+    } else {
+        alert("Gagal memperbarui database: " + response.message);
+    }
+}
 
-        function renderTable(rows, wargaTableId, adminTableId, isSumbangan) {
-            const wargaTable = document.getElementById(wargaTableId);
-            const adminTable = document.getElementById(adminTableId);
-            wargaTable.innerHTML = "";
-            adminTable.innerHTML = "";
+// ==========================================
+// 3. PROSES MEMBACA DATA TABEL
+// ==========================================
+function loadDatabaseData() {
+    sendToGoogleSheet("action=readData", "handleReadDataResponse");
+}
 
-            if(!rows || rows.length === 0) {
-                renderEmptyRow();
-                return;
-            }
+function handleReadDataResponse(response) {
+    if (response.status === "success") {
+        renderTable(response.sumbangan, 'warga-sumbangan-table', 'admin-sumbangan-table');
+        // Anda juga bisa menambahkan fungsi render untuk tabel operasional di sini
+    } else {
+        renderEmptyRow();
+    }
+}
 
-            let totalSaldo = 0;
-            rows.forEach((row, index) => {
-                // Template baris data
-                let trWarga = `<tr class="border-b border-gray-100">
-                    <td class="p-2">${index+1}</td>
-                    <td class="p-2">${row[1] || ''}</td>
-                    <td class="p-2">${row[2] || ''}</td>
-                    <td class="p-2">Rp ${row[3] || 0}</td>
-                    <td class="p-2">Rp ${row[4] || 0}</td>
-                    <td class="p-2">Rp ${row[5] || 0}</td>
-                </tr>`;
-                wargaTable.innerHTML += trWarga;
+function renderTable(rows, wargaTableId, adminTableId) {
+    const wargaTable = document.getElementById(wargaTableId);
+    const adminTable = document.getElementById(adminTableId);
+    wargaTable.innerHTML = "";
+    adminTable.innerHTML = "";
 
-                let trAdmin = `<tr class="border-b border-gray-100">
-                    <td class="p-2">${index+1}</td>
-                    <td class="p-2">${row[1] || ''}</td>
-                    <td class="p-2">${row[2] || ''}</td>
-                    <td class="p-2">Rp ${row[3] || 0}</td>
-                    <td class="p-2">Rp ${row[4] || 0}</td>
-                    <td class="p-2">Rp ${row[5] || 0}</td>
-                    <td class="p-2"><button class="text-red-500 text-xs">Hapus</button></td>
-                </tr>`;
-                adminTable.innerHTML += trAdmin;
-            });
-        }
+    if (!rows || rows.length === 0) {
+        renderEmptyRow();
+        return;
+    }
 
-        function renderEmptyRow() {
-            const msg = `<td colspan="7" class="p-4 text-center text-gray-400 italic">Database di Google Sheet masih kosong. Silakan isi baris baru langsung dari Spreadsheet atau tombol Input.</td>`;
-            document.getElementById('warga-sumbangan-table').innerHTML = msg;
-            document.getElementById('admin-sumbangan-table').innerHTML = msg;
-            document.getElementById('warga-operasional-table').innerHTML = msg;
-            document.getElementById('admin-operasional-table').innerHTML = msg;
-        }
+    rows.forEach((row, index) => {
+        let trWarga = `<tr class="border-b border-gray-100">
+            <td class="p-2">${index+1}</td>
+            <td class="p-2">${row[1] || ''}</td>
+            <td class="p-2">${row[2] || ''}</td>
+            <td class="p-2">Rp ${row[3] || 0}</td>
+            <td class="p-2">Rp ${row[4] || 0}</td>
+            <td class="p-2">Rp ${row[5] || 0}</td>
+        </tr>`;
+        wargaTable.innerHTML += trWarga;
 
-        // 3. FITUR UBAH PASSWORD LANGSUNG KE SPREADSHEET
-        document.getElementById('change-password-form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            toggleLoading(true);
+        let trAdmin = `<tr class="border-b border-gray-100">
+            <td class="p-2">${index+1}</td>
+            <td class="p-2">${row[1] || ''}</td>
+            <td class="p-2">${row[2] || ''}</td>
+            <td class="p-2">Rp ${row[3] || 0}</td>
+            <td class="p-2">Rp ${row[4] || 0}</td>
+            <td class="p-2">Rp ${row[5] || 0}</td>
+            <td class="p-2"><button class="text-red-500 text-xs">Hapus</button></td>
+        </tr>`;
+        adminTable.innerHTML += trAdmin;
+    });
+}
 
-            const oldPass = document.getElementById('old-pass').value;
-            const newPass = document.getElementById('new-pass').value;
+function renderEmptyRow() {
+    const msg = `<td colspan="7" class="p-4 text-center text-gray-400 italic">Database di Google Sheet masih kosong.</td>`;
+    document.getElementById('warga-sumbangan-table').innerHTML = msg;
+    document.getElementById('admin-sumbangan-table').innerHTML = msg;
+}
 
-            fetch(SHEET_WEBAPP_URL, {
-                method: "POST",
-                mode: "no-cors",
-                body: JSON.stringify({
-                    action: "changePassword",
-                    oldPassword: oldPass,
-                    newPassword: newPass
-                })
-            })
-            .then(() => {
-                toggleLoading(false);
-                alert("Permintaan penggantian password dikirim ke Google Sheets. Silakan cek lembar 'users' Anda.");
-                closeModal('password-modal');
-                document.getElementById('change-password-form').reset();
-            })
-            .catch(() => {
-                toggleLoading(false);
-                alert("Gagal memperbarui password.");
-            });
-        });
+function logout() {
+    adminPage.classList.add('hidden');
+    wargaPage.classList.add('hidden');
+    loginPage.classList.remove('hidden');
+    document.getElementById('login-form').reset();
+}
 
-        function logout() {
-            adminPage.classList.add('hidden');
-            wargaPage.classList.add('hidden');
-            loginPage.classList.remove('hidden');
-            document.getElementById('login-form').reset();
-        }
-
-        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
-        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
-    </script>
-</body>
-</html>
+function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+</script>
