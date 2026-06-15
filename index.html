@@ -1,222 +1,4 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rekapitulasi Kas Cluster The Royal Dago</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-</head>
-<body class="bg-gray-100 font-sans antialiased text-gray-800">
-
-    <div id="loading" class="hidden fixed inset-0 bg-black/50 flex flex-col items-center justify-center text-white z-50">
-        <div class="animate-spin rounded-full h-12 w-12 border-4 border-t-transparent border-white mb-2"></div>
-        <p>Menghubungkan ke Database Google Sheets...</p>
-    </div>
-
-    <div id="login-page" class="flex min-h-screen items-center justify-center px-4 py-12 sm:px-6 lg:px-8">
-        <div class="w-full max-w-md space-y-8 rounded-xl bg-white p-8 shadow-lg">
-            <div>
-                <h2 class="text-center text-3xl font-bold tracking-tight text-gray-900">Masuk ke Sistem Kas</h2>
-                <p class="mt-2 text-center text-sm text-gray-600">Terhubung langsung ke Cloud Google Sheets</p>
-            </div>
-            <form class="mt-8 space-y-6" id="login-form">
-                <div class="-space-y-px rounded-md shadow-sm">
-                    <div>
-                        <input id="username" type="text" required class="relative block w-full rounded-t-md border border-gray-300 px-3 py-2 text-gray-900 focus:z-10 focus:border-blue-500 focus:outline-none sm:text-sm" placeholder="Username (admin / warga)">
-                    </div>
-                    <div>
-                        <input id="password" type="password" required class="relative block w-full rounded-b-md border border-gray-300 px-3 py-2 text-gray-900 focus:z-10 focus:border-blue-500 focus:outline-none sm:text-sm" placeholder="Password">
-                    </div>
-                </div>
-                <div>
-                    <button type="submit" class="w-full flex justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
-                        Masuk
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <div id="warga-page" class="hidden min-h-screen flex flex-col">
-        <header class="bg-blue-600 text-white px-4 py-4 shadow-md flex flex-col sm:flex-row justify-between items-center gap-4">
-            <h1 class="text-xl font-bold">🏠 REKAPITULASI KAS CLUSTER THE ROYAL DAGO</h1>
-            <button onclick="logout()" class="bg-yellow-500 hover:bg-yellow-600 text-slate-900 font-bold px-4 py-2 rounded-lg text-sm transition shadow">
-                🚪 Keluar / Logout
-            </button>
-        </header>
-
-        <main class="p-4 md:p-6 max-w-7xl mx-auto w-full grid grid-cols-1 md:grid-cols-2 gap-6 flex-grow">
-            <section class="bg-white p-4 rounded-xl shadow border border-gray-200 md:col-span-2 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div>
-                    <h3 class="text-blue-600 font-bold text-lg">🖨️ Cetak & Ekspor Laporan Kas</h3>
-                    <p class="text-xs text-gray-500">Unduh pembukuan cluster langsung.</p>
-                </div>
-                <div class="flex flex-wrap gap-2 w-full sm:w-auto">
-                    <button class="bg-red-500 text-white text-xs font-bold px-3 py-2 rounded shadow">📄 Unduh PDF</button>
-                    <button class="bg-green-600 text-white text-xs font-bold px-3 py-2 rounded shadow">📊 Unduh Excel (XL)</button>
-                    <button class="bg-cyan-500 text-white text-xs font-bold px-3 py-2 rounded shadow">🖼️ Unduh Gambar (PNG)</button>
-                </div>
-            </section>
-
-            <section class="bg-white p-4 rounded-xl shadow border border-gray-200">
-                <h3 class="text-amber-500 font-bold mb-4">📋 Tabel Kas Bulanan Warga</h3>
-                <div class="bg-gray-50 border border-gray-200 text-gray-500 p-4 rounded-lg text-sm text-center">
-                    Data kas bulanan saat ini kosong atau dalam pemeliharaan.
-                </div>
-            </section>
-
-            <section class="bg-white p-4 rounded-xl shadow border border-gray-200 flex flex-col justify-between">
-                <div>
-                    <h3 class="text-emerald-600 font-bold mb-4">💛 Tabel Sumbangan Sukarela</h3>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left text-sm border-collapse">
-                            <thead>
-                                <tr class="bg-gray-50 border-b border-gray-200 text-gray-600">
-                                    <th class="p-2">No</th>
-                                    <th class="p-2">Tanggal</th>
-                                    <th class="p-2">Keterangan</th>
-                                    <th class="p-2">Masuk</th>
-                                    <th class="p-2">Keluar</th>
-                                    <th class="p-2">Saldo</th>
-                                </tr>
-                            </thead>
-                            <tbody id="warga-sumbangan-table">
-                                </tbody>
-                        </table>
-                    </div>
-                </div>
-                <div class="border-t border-gray-200 pt-4 mt-4 flex justify-between items-center font-bold text-emerald-600">
-                    <span>TOTAL REAL TIME:</span>
-                    <span id="warga-total-sumbangan">Rp 0</span>
-                </div>
-            </section>
-
-            <section class="bg-white p-4 rounded-xl shadow border border-gray-200 md:col-span-2">
-                <h3 class="text-slate-700 font-bold mb-4">💵 Log Transaksi Operasional</h3>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left text-sm border-collapse">
-                        <thead>
-                            <tr class="bg-gray-100 border-b border-gray-200 text-gray-700">
-                                <th class="p-3">No</th>
-                                <th class="p-3">Tanggal</th>
-                                <th class="p-3">Nama Transaksi</th>
-                                <th class="p-3">Pemasukan</th>
-                                <th class="p-3">Pengeluaran</th>
-                                <th class="p-3">Total Saldo</th>
-                            </tr>
-                        </thead>
-                        <tbody id="warga-operasional-table">
-                            </tbody>
-                    </table>
-                </div>
-            </section>
-        </main>
-    </div>
-
-    <div id="admin-page" class="hidden min-h-screen flex flex-col">
-        <header class="bg-red-600 text-white px-4 py-4 shadow-md flex flex-col sm:flex-row justify-between items-center gap-4">
-            <h1 class="text-xl font-bold">⚙️ INTERFACE MANAGEMENT KAS (SUPER USER)</h1>
-            <div class="flex gap-2 w-full sm:w-auto justify-end">
-                <button onclick="openModal('password-modal')" class="bg-white text-gray-800 font-semibold px-4 py-2 rounded-lg text-sm shadow">
-                    ⚙️ Pengaturan Akun
-                </button>
-                <button onclick="logout()" class="bg-slate-900 text-white font-semibold px-4 py-2 rounded-lg text-sm shadow">
-                    Keluar / Logout
-                </button>
-            </div>
-        </header>
-
-        <div class="p-4 max-w-7xl mx-auto w-full">
-            <div class="bg-white p-4 rounded-xl shadow border border-gray-200 flex flex-wrap items-center gap-4">
-                <span class="font-bold text-gray-700">Kontrol Pengurus:</span>
-                <button class="bg-emerald-600 text-white font-bold px-4 py-2 rounded-lg text-sm hover:bg-emerald-700"> + Tambah Warga Baru</button>
-            </div>
-        </div>
-
-        <main class="p-4 md:p-6 max-w-7xl mx-auto w-full grid grid-cols-1 md:grid-cols-2 gap-6 flex-grow pt-0">
-            <section class="bg-white p-4 rounded-xl shadow border border-gray-200 min-h-[200px]">
-                <h3 class="text-gray-800 font-bold mb-4">📋 Kelola Pembayaran Bulanan</h3>
-                <p class="text-gray-400 text-sm italic">Belum ada aktivitas data bulanan.</p>
-            </section>
-
-            <section class="bg-white p-4 rounded-xl shadow border border-gray-200 flex flex-col justify-between min-h-[200px]">
-                <div>
-                    <div class="flex justify-between items-start gap-2 mb-4">
-                        <h3 class="text-emerald-600 font-bold">💛 Kelola Sumbangan Sukarela</h3>
-                        <button class="bg-emerald-600 text-white text-xs font-bold px-3 py-1.5 rounded">Input Sumbangan Baru</button>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left text-sm border-collapse">
-                            <thead>
-                                <tr class="bg-emerald-50 border-b border-emerald-100 text-emerald-800">
-                                    <th class="p-2">No</th>
-                                    <th class="p-2">Tanggal</th>
-                                    <th class="p-2">Keterangan</th>
-                                    <th class="p-2">Masuk</th>
-                                    <th class="p-2">Keluar</th>
-                                    <th class="p-2">Saldo</th>
-                                    <th class="p-2">Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody id="admin-sumbangan-table">
-                                </tbody>
-                        </table>
-                    </div>
-                </div>
-                <div class="border-t border-gray-200 pt-4 mt-4 flex justify-between items-center font-bold text-emerald-600">
-                    <span>TOTAL REAL TIME:</span>
-                    <span id="admin-total-sumbangan">Rp 0</span>
-                </div>
-            </section>
-
-            <section class="bg-white p-4 rounded-xl shadow border border-gray-200 md:col-span-2">
-                <div class="flex justify-between items-center gap-4 mb-4">
-                    <h3 class="text-slate-700 font-bold">📄 Kelola Log Transaksi Operasional</h3>
-                    <button class="bg-amber-500 text-slate-900 font-bold text-xs px-3 py-1.5 rounded">Input Transaksi Baru</button>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left text-sm border-collapse">
-                        <thead>
-                            <tr class="bg-gray-100 border-b border-gray-200 text-gray-700">
-                                <th class="p-3">No</th>
-                                <th class="p-3">Tanggal</th>
-                                <th class="p-3">Nama Transaksi</th>
-                                <th class="p-3">Pemasukan</th>
-                                <th class="p-3">Pengeluaran</th>
-                                <th class="p-3">Total Saldo</th>
-                                <th class="p-3">Aksi Admin</th>
-                            </tr>
-                        </thead>
-                        <tbody id="admin-operasional-table">
-                            </tbody>
-                    </table>
-                </div>
-            </section>
-        </main>
-    </div>
-
-    <div id="password-modal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-xl shadow-xl max-w-md w-full p-6 space-y-4">
-            <h3 class="text-lg font-bold text-gray-900">Ubah Password Admin di Google Sheet</h3>
-            <form id="change-password-form" class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Password Lama</label>
-                    <input type="password" id="old-pass" required class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Password Baru</label>
-                    <input type="password" id="new-pass" required class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm">
-                </div>
-                <div class="flex justify-end gap-2 pt-2">
-                    <button type="button" onclick="closeModal('password-modal')" class="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg text-sm">Batal</button>
-                    <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded-lg text-sm">Simpan di Database</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <script>
-       // MASUKKAN URL WEB APP SCRIPT BARU ANDA DI SINI
+// PASTIKAN LINK URL BERIKUT ADALAH HASIL DEPLOY VERSI BARU SPREADSHEET ANDA
 const SHEET_WEBAPP_URL = "https://diansulistyo67manutd-design.github.io/kas-cluster-dago/";
 
 const loading = document.getElementById('loading');
@@ -229,16 +11,13 @@ function toggleLoading(show) {
     else loading.classList.add('hidden');
 }
 
-// Fungsi pembantu untuk mengirim data ke Google Sheet tanpa hambatan CORS (JSONP)
+// Mesin utama pengirim data anti Gagal / Anti-CORS browser
 function sendToGoogleSheet(params, callbackName) {
-    // Hapus script JSONP yang lama jika ada
     const oldScript = document.getElementById('jsonp-script');
     if (oldScript) oldScript.remove();
 
-    // Bangun URL dengan parameter
-    let url = SHEET_WEBAPP_URL + "?" + params + "&callback=" + callbackName + "&_nocache=" + new Date().getTime();
+    let url = SHEET_WEBAPP_URL + "?" + params + "&callback=" + callbackName + "&_ts=" + new Date().getTime();
 
-    // Buat element script baru untuk menembus CORS
     const script = document.createElement('script');
     script.id = 'jsonp-script';
     script.src = url;
@@ -246,7 +25,7 @@ function sendToGoogleSheet(params, callbackName) {
 }
 
 // ==========================================
-// 1. PROSES FORM LOGIN
+// HANDLE FORM LOGIN
 // ==========================================
 document.getElementById('login-form').addEventListener('submit', function(e) {
     e.preventDefault();
@@ -258,7 +37,6 @@ document.getElementById('login-form').addEventListener('submit', function(e) {
     sendToGoogleSheet(`action=login&username=${user}&password=${pass}`, 'handleLoginResponse');
 });
 
-// Callback penanganan hasil login
 function handleLoginResponse(response) {
     toggleLoading(false);
     if (response.status === "success") {
@@ -268,14 +46,14 @@ function handleLoginResponse(response) {
         } else {
             wargaPage.classList.remove('hidden');
         }
-        loadDatabaseData(); // Muat data tabel
+        alert("Berhasil masuk ke sistem!");
     } else {
-        alert("Gagal Masuk: " + response.message);
+        alert("Gagal Login: " + response.message);
     }
 }
 
 // ==========================================
-// 2. PROSES GANTI PASSWORD (SINKRON KE GOOGLE SHEET)
+// HANDLE FORM GANTI PASSWORD
 // ==========================================
 document.getElementById('change-password-form').addEventListener('submit', function(e) {
     e.preventDefault();
@@ -287,73 +65,13 @@ document.getElementById('change-password-form').addEventListener('submit', funct
     sendToGoogleSheet(`action=changePassword&oldPassword=${oldPass}&newPassword=${newPass}`, 'handleChangePasswordResponse');
 });
 
-// Callback penanganan hasil ganti password
 function handleChangePasswordResponse(response) {
     toggleLoading(false);
+    alert(response.message); // Menampilkan notifikasi langsung dari server Google Sheets Anda
     if (response.status === "success") {
-        alert(response.message); // Menampilkan pesan sukses dari Google Sheet
         closeModal('password-modal');
         document.getElementById('change-password-form').reset();
-    } else {
-        alert("Gagal memperbarui database: " + response.message);
     }
-}
-
-// ==========================================
-// 3. PROSES MEMBACA DATA TABEL
-// ==========================================
-function loadDatabaseData() {
-    sendToGoogleSheet("action=readData", "handleReadDataResponse");
-}
-
-function handleReadDataResponse(response) {
-    if (response.status === "success") {
-        renderTable(response.sumbangan, 'warga-sumbangan-table', 'admin-sumbangan-table');
-        // Anda juga bisa menambahkan fungsi render untuk tabel operasional di sini
-    } else {
-        renderEmptyRow();
-    }
-}
-
-function renderTable(rows, wargaTableId, adminTableId) {
-    const wargaTable = document.getElementById(wargaTableId);
-    const adminTable = document.getElementById(adminTableId);
-    wargaTable.innerHTML = "";
-    adminTable.innerHTML = "";
-
-    if (!rows || rows.length === 0) {
-        renderEmptyRow();
-        return;
-    }
-
-    rows.forEach((row, index) => {
-        let trWarga = `<tr class="border-b border-gray-100">
-            <td class="p-2">${index+1}</td>
-            <td class="p-2">${row[1] || ''}</td>
-            <td class="p-2">${row[2] || ''}</td>
-            <td class="p-2">Rp ${row[3] || 0}</td>
-            <td class="p-2">Rp ${row[4] || 0}</td>
-            <td class="p-2">Rp ${row[5] || 0}</td>
-        </tr>`;
-        wargaTable.innerHTML += trWarga;
-
-        let trAdmin = `<tr class="border-b border-gray-100">
-            <td class="p-2">${index+1}</td>
-            <td class="p-2">${row[1] || ''}</td>
-            <td class="p-2">${row[2] || ''}</td>
-            <td class="p-2">Rp ${row[3] || 0}</td>
-            <td class="p-2">Rp ${row[4] || 0}</td>
-            <td class="p-2">Rp ${row[5] || 0}</td>
-            <td class="p-2"><button class="text-red-500 text-xs">Hapus</button></td>
-        </tr>`;
-        adminTable.innerHTML += trAdmin;
-    });
-}
-
-function renderEmptyRow() {
-    const msg = `<td colspan="7" class="p-4 text-center text-gray-400 italic">Database di Google Sheet masih kosong.</td>`;
-    document.getElementById('warga-sumbangan-table').innerHTML = msg;
-    document.getElementById('admin-sumbangan-table').innerHTML = msg;
 }
 
 function logout() {
@@ -364,5 +82,4 @@ function logout() {
 }
 
 function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
-    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
-</script>
+function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
