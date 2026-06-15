@@ -1,85 +1,145 @@
-// PASTIKAN LINK URL BERIKUT ADALAH HASIL DEPLOY VERSI BARU SPREADSHEET ANDA
-const SHEET_WEBAPP_URL = "https://diansulistyo67manutd-design.github.io/kas-cluster-dago/";
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Sistem Kas Royal Dago</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+<body class="bg-gray-100 font-sans antialiased text-gray-800">
 
-const loading = document.getElementById('loading');
-const loginPage = document.getElementById('login-page');
-const wargaPage = document.getElementById('warga-page');
-const adminPage = document.getElementById('admin-page');
+    <div id="loading" class="hidden fixed inset-0 bg-black/50 flex flex-col items-center justify-center text-white z-50">
+        <div class="animate-spin rounded-full h-12 w-12 border-4 border-t-transparent border-white mb-2"></div>
+        <p>Memproses data ke Google Sheets...</p>
+    </div>
 
-function toggleLoading(show) {
-    if(show) loading.classList.remove('hidden');
-    else loading.classList.add('hidden');
-}
+    <div id="login-page" class="flex min-h-screen items-center justify-center px-4">
+        <div class="w-full max-w-md space-y-8 rounded-xl bg-white p-8 shadow-lg">
+            <h2 class="text-center text-2xl font-bold text-gray-900">Masuk ke Sistem Kas</h2>
+            <form class="space-y-4" id="login-form">
+                <input id="username" type="text" required class="w-full border border-gray-300 px-3 py-2 rounded-md" placeholder="Username (admin / warga)">
+                <input id="password" type="password" required class="w-full border border-gray-300 px-3 py-2 rounded-md" placeholder="Password (Awal: admin123 / warga123)">
+                <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-md font-medium hover:bg-blue-700">Masuk</button>
+            </form>
+        </div>
+    </div>
 
-// Mesin utama pengirim data anti Gagal / Anti-CORS browser
-function sendToGoogleSheet(params, callbackName) {
-    const oldScript = document.getElementById('jsonp-script');
-    if (oldScript) oldScript.remove();
+    <div id="warga-page" class="hidden min-h-screen flex flex-col">
+        <header class="bg-blue-600 text-white px-4 py-4 shadow flex justify-between items-center">
+            <h1 class="text-lg font-bold">🏠 REKAPITULASI KAS CLUSTER THE ROYAL DAGO</h1>
+            <button onclick="logout()" class="bg-yellow-500 text-slate-900 font-bold px-4 py-1.5 rounded-lg text-sm">Logout</button>
+        </header>
+        <main class="p-4 max-w-7xl mx-auto w-full grid grid-cols-1 md:grid-cols-2 gap-6">
+            <section class="bg-white p-4 rounded-xl shadow border md:col-span-2 flex justify-between items-center">
+                <div><h3 class="text-blue-600 font-bold">🖨️ Cetak & Ekspor Laporan Kas</h3></div>
+                <div class="flex gap-2"><button class="bg-red-500 text-white text-xs font-bold px-3 py-2 rounded">PDF</button><button class="bg-green-600 text-white text-xs font-bold px-3 py-2 rounded">Excel</button></div>
+            </section>
+            <section class="bg-white p-4 rounded-xl shadow border">
+                <h3 class="text-amber-500 font-bold mb-4">📋 Tabel Kas Bulanan Warga</h3>
+                <div class="p-4 text-center text-gray-400 italic bg-gray-50 rounded">Database pembayaran kosong.</div>
+            </section>
+            <section class="bg-white p-4 rounded-xl shadow border">
+                <h3 class="text-emerald-600 font-bold mb-4">💛 Tabel Sumbangan Sukarela</h3>
+                <div class="p-4 text-center text-gray-400 italic bg-gray-50 rounded">Database sumbangan kosong.</div>
+            </section>
+        </main>
+    </div>
 
-    let url = SHEET_WEBAPP_URL + "?" + params + "&callback=" + callbackName + "&_ts=" + new Date().getTime();
+    <div id="admin-page" class="hidden min-h-screen flex flex-col">
+        <header class="bg-red-600 text-white px-4 py-4 shadow flex justify-between items-center">
+            <h1 class="text-lg font-bold">⚙️ INTERFACE MANAGEMENT KAS (SUPER USER)</h1>
+            <div class="flex gap-2">
+                <button onclick="openModal()" class="bg-white text-gray-800 font-semibold px-3 py-1.5 rounded-lg text-sm shadow">⚙️ Pengaturan Akun</button>
+                <button onclick="logout()" class="bg-slate-900 text-white font-semibold px-3 py-1.5 rounded-lg text-sm shadow">Logout</button>
+            </div>
+        </header>
+        <main class="p-4 max-w-7xl mx-auto w-full grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-white p-4 rounded-xl shadow border md:col-span-2"><span class="font-bold text-gray-700">Kontrol Pengurus:</span> <button class="bg-emerald-600 text-white font-bold px-4 py-1.5 rounded-lg text-sm ml-2">+ Tambah Warga Baru</button></div>
+            <section class="bg-white p-4 rounded-xl shadow border-2 border-dashed min-h-[150px]"><h3 class="font-bold text-gray-800">📋 Kelola Pembayaran Bulanan</h3><p class="text-gray-400 text-sm italic mt-2">Belum ada aktivitas data bulanan.</p></section>
+            <section class="bg-white p-4 rounded-xl shadow border-2 border-dashed min-h-[150px]"><h3 class="font-bold text-emerald-600">💛 Kelola Sumbangan Sukarela</h3><p class="text-gray-400 text-sm italic mt-2">Belum ada aktivitas data sumbangan.</p></section>
+        </main>
+    </div>
 
-    const script = document.createElement('script');
-    script.id = 'jsonp-script';
-    script.src = url;
-    document.body.appendChild(script);
-}
+    <div id="password-modal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-xl shadow-xl max-w-md w-full p-6 space-y-4">
+            <h3 class="text-lg font-bold text-gray-900">Ubah Password Admin</h3>
+            <form id="change-password-form" class="space-y-4">
+                <input type="password" id="old-pass" placeholder="Password Lama" required class="w-full border p-2 rounded">
+                <input type="password" id="new-pass" placeholder="Password Baru" required class="w-full border p-2 rounded">
+                <div class="flex justify-end gap-2"><button type="button" onclick="closeModal()" class="bg-gray-200 px-4 py-2 rounded">Batal</button><button type="submit" class="bg-red-600 text-white px-4 py-2 rounded">Simpan ke Google Sheet</button></div>
+            </form>
+        </div>
+    </div>
 
-// ==========================================
-// HANDLE FORM LOGIN
-// ==========================================
-document.getElementById('login-form').addEventListener('submit', function(e) {
-    e.preventDefault();
-    toggleLoading(true);
+    <script>
+        const loading = document.getElementById('loading');
+        const loginPage = document.getElementById('login-page');
+        const wargaPage = document.getElementById('warga-page');
+        const adminPage = document.getElementById('admin-page');
 
-    const user = encodeURIComponent(document.getElementById('username').value.trim());
-    const pass = encodeURIComponent(document.getElementById('password').value);
-
-    sendToGoogleSheet(`action=login&username=${user}&password=${pass}`, 'handleLoginResponse');
-});
-
-function handleLoginResponse(response) {
-    toggleLoading(false);
-    if (response.status === "success") {
-        loginPage.classList.add('hidden');
-        if (response.role === 'admin') {
-            adminPage.classList.remove('hidden');
-        } else {
-            wargaPage.classList.remove('hidden');
+        function toggleLoading(show) {
+            if (show) loading.classList.remove('hidden');
+            else loading.classList.add('hidden');
         }
-        alert("Berhasil masuk ke sistem!");
-    } else {
-        alert("Gagal Login: " + response.message);
-    }
-}
 
-// ==========================================
-// HANDLE FORM GANTI PASSWORD
-// ==========================================
-document.getElementById('change-password-form').addEventListener('submit', function(e) {
-    e.preventDefault();
-    toggleLoading(true);
+        // AMAN & PASTI SUKSES: Memanggil fungsi Google Apps Script langsung lewat jalur internal resmi Google
+        document.getElementById('login-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            toggleLoading(true);
 
-    const oldPass = encodeURIComponent(document.getElementById('old-pass').value);
-    const newPass = encodeURIComponent(document.getElementById('new-pass').value);
+            const dataObj = {
+                username: document.getElementById('username').value.trim(),
+                password: document.getElementById('password').value
+            };
 
-    sendToGoogleSheet(`action=changePassword&oldPassword=${oldPass}&newPassword=${newPass}`, 'handleChangePasswordResponse');
-});
+            google.script.run
+                .withSuccessHandler(function(response) {
+                    toggleLoading(false);
+                    if (response.status === "success") {
+                        loginPage.classList.add('hidden');
+                        if (response.role === 'admin') adminPage.classList.remove('hidden');
+                        else wargaPage.classList.remove('hidden');
+                    } else {
+                        alert(response.message);
+                    }
+                })
+                .withFailureHandler(function() {
+                    toggleLoading(false);
+                    alert("Koneksi gagal.");
+                })
+                .prosesAksiHubungSheet('login', dataObj);
+        });
 
-function handleChangePasswordResponse(response) {
-    toggleLoading(false);
-    alert(response.message); // Menampilkan notifikasi langsung dari server Google Sheets Anda
-    if (response.status === "success") {
-        closeModal('password-modal');
-        document.getElementById('change-password-form').reset();
-    }
-}
+        document.getElementById('change-password-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            toggleLoading(true);
 
-function logout() {
-    adminPage.classList.add('hidden');
-    wargaPage.classList.add('hidden');
-    loginPage.classList.remove('hidden');
-    document.getElementById('login-form').reset();
-}
+            const dataObj = {
+                oldPassword: document.getElementById('old-pass').value,
+                newPassword: document.getElementById('new-pass').value
+            };
 
-function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
-function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+            google.script.run
+                .withSuccessHandler(function(response) {
+                    toggleLoading(false);
+                    alert(response.message);
+                    if (response.status === "success") {
+                        closeModal();
+                        document.getElementById('change-password-form').reset();
+                    }
+                })
+                .withFailureHandler(function() {
+                    toggleLoading(false);
+                    alert("Gagal menghubungi Google Sheet.");
+                })
+                .prosesAksiHubungSheet('changePassword', dataObj);
+        });
+
+        function logout() {
+            adminPage.classList.add('hidden'); wargaPage.classList.add('hidden'); loginPage.classList.remove('hidden');
+            document.getElementById('login-form').reset();
+        }
+        function openModal() { document.getElementById('password-modal').classList.remove('hidden'); }
+        function closeModal() { document.getElementById('password-modal').classList.add('hidden'); }
+    </script>
+</body>
+</html>
