@@ -238,7 +238,7 @@
             const user = document.getElementById('username').value;
             const pass = document.getElementById('password').value;
 
-            fetch(SHEET_WEBAPP_URL, {
+            URLSearchParams (SHEET_WEBAPP_URL, {
                 method: "POST",
                 mode: "no-cors", // Mengabaikan kendala CORS browser
                 body: JSON.stringify({
